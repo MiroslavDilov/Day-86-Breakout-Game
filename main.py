@@ -4,6 +4,8 @@ pygame.init()
 
 window = pygame.display.set_mode((800,600))
 
+clock = pygame.time.Clock()
+
 running = True
 
 
@@ -59,13 +61,23 @@ class Ball:
         elif self.ball_rect.bottom >= 600:
             self.y_move = -1
 
+    def detect_paddle_collision(self, paddle_rect):
+        if self.ball_rect.colliderect(paddle_rect):
+            self.y_move = -1
+
     def start(self):
         self.started = True
+
+
+
+# class Brick():
+#     def __init__(self):
 
 
 paddle = Paddle()
 ball = Ball()
 while running:
+    clock.tick(300)
     pygame.key.set_repeat(3)
     window.fill((246, 231, 216))
 
@@ -78,6 +90,7 @@ while running:
             if event.key == pygame.K_SPACE:
                 ball.start()
 
+    ball.detect_paddle_collision(paddle.paddle_rect)
     ball.draw_ball(paddle.get_center())
     paddle.draw_paddle()
     pygame.display.flip()
