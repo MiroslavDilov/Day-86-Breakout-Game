@@ -25,9 +25,9 @@ class Paddle:
 
     def move_paddle(self, key):
         if key == pygame.K_LEFT and self.paddle_rect.left >= 0:
-            self.x -= 1
+            self.x -= 2
         elif key == pygame.K_RIGHT and self.paddle_rect.right <= 800:
-            self.x += 1
+            self.x += 2
 
     def get_center(self):
         return self.paddle_rect.center
@@ -62,18 +62,44 @@ class Ball:
             self.y_move = -1
 
     def detect_paddle_collision(self, paddle_rect):
-        if self.ball_rect.colliderect(paddle_rect):
+        if self.ball_rect.colliderect(paddle_rect) and ball.ball_rect.center[1] < paddle_rect.center[1]:
             self.y_move = -1
 
     def start(self):
         self.started = True
 
+    def brick_collide(self):
+        self.y_move = 1
 
 
-# class Brick():
-#     def __init__(self):
+class Brick():
+    def __init__(self, x, y):
+        self.rect = pygame.Rect(x, y, 50, 20)
+
+    def draw_brick(self):
+        pygame.draw.rect(window, (246, 137, 137), self.rect)
+
+    def detect_collision(self, ball_rect):
+        return self.rect.colliderect(ball_rect)
 
 
+def generate_bricks(rows):
+    array = []
+
+    x = 50
+    y = 50
+    for i in range(rows):
+        for j in range(13):
+            brick = Brick(x, y)
+            array.append(brick)
+            x += 55
+        x = 50
+        y += 30
+
+    return array
+
+
+bricks = generate_bricks(5)
 paddle = Paddle()
 ball = Ball()
 while running:
@@ -89,6 +115,13 @@ while running:
                 paddle.move_paddle(event.key)
             if event.key == pygame.K_SPACE:
                 ball.start()
+
+    for brick in bricks:
+        brick.draw_brick()
+
+        if brick.detect_collision(ball.ball_rect):
+            bricks.remove(brick)
+            ball.brick_collide()
 
     ball.detect_paddle_collision(paddle.paddle_rect)
     ball.draw_ball(paddle.get_center())
