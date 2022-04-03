@@ -3,6 +3,9 @@ import pygame
 pygame.init()
 
 window = pygame.display.set_mode((800,600))
+pygame.display.set_caption("Breakout")
+
+pygame.display.set_icon(pygame.image.load("images/ball.png"))
 
 clock = pygame.time.Clock()
 
@@ -68,8 +71,12 @@ class Ball:
     def start(self):
         self.started = True
 
-    def brick_collide(self):
-        self.y_move = 1
+    def brick_collide(self, brick_rect):
+        if self.ball_rect.top <= brick_rect.bottom:
+            if self.ball_rect.right >= brick_rect.left and self.ball_rect.center[1] > brick_rect.center[1]:
+                self.x_move = -1
+            self.y_move = 1
+
 
 
 class Brick():
@@ -103,7 +110,7 @@ bricks = generate_bricks(5)
 paddle = Paddle()
 ball = Ball()
 while running:
-    clock.tick(300)
+    clock.tick(200)
     pygame.key.set_repeat(3)
     window.fill((246, 231, 216))
 
@@ -121,7 +128,7 @@ while running:
 
         if brick.detect_collision(ball.ball_rect):
             bricks.remove(brick)
-            ball.brick_collide()
+            ball.brick_collide(brick.rect)
 
     ball.detect_paddle_collision(paddle.paddle_rect)
     ball.draw_ball(paddle.get_center())
