@@ -43,6 +43,7 @@ class Ball:
         self.started = False
         self.x_move = 1
         self.y_move = -1
+        self.lost_game = False
 
     def draw_ball(self, pad_center):
         pad_x = pad_center[0]
@@ -62,10 +63,10 @@ class Ball:
         elif self.ball_rect.top <= 0:
             self.y_move = 1
         elif self.ball_rect.bottom >= 600:
-            self.y_move = -1
+            self.lost_game = True
 
     def detect_paddle_collision(self, paddle_rect):
-        if self.ball_rect.colliderect(paddle_rect) and ball.ball_rect.center[1] < paddle_rect.center[1]:
+        if self.ball_rect.colliderect(paddle_rect) and self.ball_rect.center[1] < paddle_rect.center[1]:
             self.y_move = -1
 
     def start(self):
@@ -73,10 +74,20 @@ class Ball:
 
     def brick_collide(self, brick_rect):
         if self.ball_rect.top <= brick_rect.bottom:
-            if self.ball_rect.right >= brick_rect.left and self.ball_rect.center[1] > brick_rect.center[1]:
+            if self.ball_rect.right >= brick_rect.left and self.ball_rect.top < brick_rect.center[1]:
+                print(self.ball_rect.center[1])
+                print(brick_rect.center[1])
                 self.x_move = -1
+            if self.ball_rect.left >= brick_rect.right and self.ball_rect.top < brick_rect.center[1]:
+                print(self.ball_rect.center[1])
+                print(brick_rect.center[1])
+                self.x_move = 1
             self.y_move = 1
+        if self.ball_rect.top < brick_rect.top:
+            self.y_move = -1
 
+    def has_lost_game(self):
+        return self.lost_game
 
 
 class Brick():
@@ -106,33 +117,57 @@ def generate_bricks(rows):
     return array
 
 
-bricks = generate_bricks(5)
-paddle = Paddle()
-ball = Ball()
-while running:
-    clock.tick(200)
-    pygame.key.set_repeat(3)
-    window.fill((246, 231, 216))
+def display(disp_text):
+    font = pygame.font.Font(pygame.font.get_default_font(), 32)
+    text = font.render(f"{disp_text} (press Spacebar to play again)", True, (135, 67, 86))
+    textRect = text.get_rect()
+    textRect.center = (400, 300)
+    while True:
+        window.blit(text, textRect)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    play()
+        pygame.display.flip()
 
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            pygame.quit()
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
-                paddle.move_paddle(event.key)
-            if event.key == pygame.K_SPACE:
-                ball.start()
 
-    for brick in bricks:
-        brick.draw_brick()
+def play():
+    bricks = generate_bricks(5)
+    paddle = Paddle()
+    ball = Ball()
+    while running:
+        clock.tick(300)
+        pygame.key.set_repeat(3)
+        window.fill((246, 231, 216))
 
-        if brick.detect_collision(ball.ball_rect):
-            bricks.remove(brick)
-            ball.brick_collide(brick.rect)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
+                    paddle.move_paddle(event.key)
+                if event.key == pygame.K_SPACE:
+                    ball.start()
 
-    ball.detect_paddle_collision(paddle.paddle_rect)
-    ball.draw_ball(paddle.get_center())
-    paddle.draw_paddle()
-    pygame.display.flip()
+        for brick in bricks:
+            brick.draw_brick()
 
+            if brick.detect_collision(ball.ball_rect):
+                bricks.remove(brick)
+                ball.brick_collide(brick.rect)
+                if len(bricks) == 0:
+                    ball.started = False
+                    display("You Win!")
+
+        if ball.has_lost_game():
+            display("You Lost")
+
+        ball.detect_paddle_collision(paddle.paddle_rect)
+        ball.draw_ball(paddle.get_center())
+        paddle.draw_paddle()
+        pygame.display.flip()
+
+play()
 
